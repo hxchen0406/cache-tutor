@@ -2,26 +2,58 @@ import Button from "@material-ui/core/Button";
 import {useCookies} from "react-cookie";
 import {useState} from "react";
 
-import {randGenerateConfig} from './Question'
-import {TextField} from "@material-ui/core";
+import {randGenerateConfig,calculateNewMastery} from './Question'
+import {CircularProgress, TextField} from "@material-ui/core";
 
 export default function Tutor() {
-  const [cookies, setCookie] = useCookies(['name']);
+  const [cookies, setCookies] = useCookies();
   const [numStep, setNumStep] = useState(0)
   const [config, setConfig] = useState(cookies.config)
 
+
+  const [isStepCorrect, setIsStepCorrect] = useState({})
+
   const [stepOneAnswer, setStepOneAnswer] = useState()
+
   const gradeStepOne = () => {
-    setIsStepCorrect({...isStepCorrect, 'one': parseInt(stepOneAnswer) === config['numElemPerWay']})
+    const isCorrect = parseInt(stepOneAnswer) === config['numElemPerWay']
+    setIsStepCorrect({...isStepCorrect, 'one': isCorrect})
+    const newMastery = calculateNewMastery(cookies.mastery,0.1,0.3,0.1,isCorrect)
+    if(cookies.mastery<0.5){
+      setCookies('mastery',Math.min(0.5,newMastery))
+    }
   }
 
   const [stepTwoAnswer, setStepTwoAnswer] = useState()
   const gradeStepTwo = () => {
-    setIsStepCorrect({...isStepCorrect, 'two': parseInt(stepTwoAnswer) === config['numElemPerWay'] + 1})
-  }
+    const isCorrect = parseInt(stepTwoAnswer) === (config['numElemPerWay']+1)
+    setIsStepCorrect({...isStepCorrect, 'two': isCorrect})
+    const newMastery = calculateNewMastery(cookies.mastery,0.1,0.3,0.1,isCorrect)
+    if(cookies.mastery<0.5){
+      setCookies('mastery',Math.min(0.5,newMastery))
+    }   }
+
+  const gradeStepThree = (isCorrect)=>{
+    setIsStepCorrect({...isStepCorrect, 'three': isCorrect})
+    const newMastery = calculateNewMastery(cookies.mastery,0.12,0.28,0.1,isCorrect)
+    if(cookies.mastery<0.5){
+      setCookies('mastery',Math.min(0.5,newMastery))
+    }   }
 
 
-  const [isStepCorrect, setIsStepCorrect] = useState({})
+  const [stepFourAnswer, setStepFourAnswer] = useState()
+  const gradeStepFour = () => {
+    const givenIdx = config.givenIdx
+    const ansIdx = parseInt(stepFourAnswer)
+    const diff = Math.abs(givenIdx - ansIdx)
+    //1. index difference should be divisible by number of elements per way 2. the answer should not be the same as the given index
+    //3 & 4. the index should be within bound (non-negative, cannot exceed the array size)
+    let isCorrect = (diff % config.numElemPerWay === 0) && diff!==0 && ansIdx>=0 && ansIdx<config.arraySize
+    setIsStepCorrect({...isStepCorrect, 'four': isCorrect})
+    const newMastery = calculateNewMastery(cookies.mastery,0.3,0.1,0.1,isCorrect)
+    if(cookies.mastery<0.5){
+      setCookies('mastery',Math.min(0.5,newMastery))
+    }   }
 
 
   const generateQuestionText = (questionConfig) => {
@@ -38,6 +70,15 @@ export default function Tutor() {
           <Button variant={'outlined'} href={'/question'}>Back to question</Button>
         </nav>
       </div>
+      <p>Your current mastery level:</p>
+      {cookies.mastery}
+      <CircularProgress variant="determinate" value={Math.min(1,cookies.mastery)*100}/>
+      <br/>
+      {cookies.mastery>=0.5 &&<div>
+        <p>You can only earn up to 50% of mastery score through the tutoring process.</p>
+        <p> To push yourself further, try solving a question on your own.</p>
+      </div>}
+
       <h3>Let's take a look at this question:</h3>
 
       <div style={{whiteSpace: 'break-spaces'}}>{generateQuestionText(config)}
@@ -50,7 +91,6 @@ export default function Tutor() {
             setNumStep(0);
             setConfig(randGenerateConfig())
             setIsStepCorrect({})
-            console.log(isStepCorrect)
           }
         }
         }>Restart with a different variant</Button>}
@@ -116,28 +156,50 @@ export default function Tutor() {
         <p>Do you see the pattern here? Given A[n], which of the following element would map to the same index and
           offset as A[n]?</p>
         <p>(Suppose there's no index-out-of-bound issue.)</p>
-        <Button variant={'outlined'} onClick={() => setIsStepCorrect({
-          ...isStepCorrect,
-          'three': true
-        })}>A[n+{config.numElemPerWay}]</Button>
+        <Button variant={'outlined'} onClick={() => gradeStepThree(true)}>A[n+{config.numElemPerWay}]</Button>
         <Button variant={'outlined'}
-                onClick={() => setIsStepCorrect({
-                  ...isStepCorrect,
-                  'three': false
-                })}>A[n+{config.numElemPerWay / 2}]</Button>
+                onClick={() => gradeStepThree(false)}>A[n+{config.numElemPerWay / 2}]</Button>
         <Button variant={'outlined'}
-                onClick={() => setIsStepCorrect({
-                  ...isStepCorrect,
-                  'three': false
-                })}>A[n+{config.numElemPerWay * 1.5}]</Button>
+                onClick={() => gradeStepThree(false)}>A[n+{config.numElemPerWay * 1.5}]</Button>
 
         {'three' in isStepCorrect && <div className={'StepThreeResult'}>
-          {isStepCorrect['three']? <div>
-            step 3 correct
-          </div>: <div>
+          {isStepCorrect['three'] ? <div>
+            <h3>Impressive! You ROCK!!</h3>
+            <Button variant={'outlined'} onClick={() => {
+              setNumStep(4)
+            }}>Continue</Button>
+
+          </div> : <div>
+            {/*TODO: more feedback here*/}
             step 3 incorrect
           </div>}
         </div>}
+      </div>}
+
+      {numStep === 4 && <div className={'StepFour'}>
+        <p>Now you get the idea. Suppose the number of elements that can fit into <b>one way</b> of the cache is n,
+          then A[i] and A[i+n] should map to the same index and offset</p>
+        <p>So now let's go back to the original question. What is one possible array element that maps to the same index
+          and offset as A[{config.givenIdx}]?</p>
+        <TextField variant={'outlined'} label={'array index'} onChange={(e) => {
+          setStepFourAnswer(e.target.value)
+        }}/>
+        <Button variant={'outlined'} onClick={gradeStepFour}>Submit</Button>
+
+        {'four' in isStepCorrect && <div className={'SteoFourResult'}>
+          {isStepCorrect['four']?
+            <div className={'StepFourCorrect'}>
+              <h3>Congratulations! You've made it!</h3>
+              <p>Now let's try this question again with a different configuration to strengthen your understanding</p>
+              <Button variant={'outlined'} href={'/question'} onClick={()=>{
+              setCookies('mastery',0.5)}
+              }>Ok, try another variant.</Button>
+            </div> :<div className={'StepFourIncorrect'}>
+              {/*TODO: step four feedbacks*/}
+              Step four incorrect
+            </div>}
+        </div> }
+
 
       </div>}
 

@@ -1,8 +1,9 @@
-import Button from '@material-ui/core/Button'
 import {useState} from "react";
 import {useCookies} from 'react-cookie';
 
-import {TextField} from "@material-ui/core";
+import {TextField, Button, CircularProgress} from "@material-ui/core";
+
+
 
 export function randGenerateConfig() {
   const waySize = 2 ** (Math.floor(Math.random() * 3) + 7) //way size is randomly chosen between [128,256,512]
@@ -27,14 +28,22 @@ export function randGenerateConfig() {
   }
 }
 
+export const calculateNewMastery = (p_prev, ps, pg, pt, isCorrect) => {
+  const p_prev_correct = p_prev * (1 - ps) / (p_prev * (1 - ps) + (1 - p_prev) * pg)
+  const p_prev_incorrect = p_prev * ps / (p_prev * ps + (1 - p_prev) * (1 - pg))
+
+  return isCorrect ? Math.min(1,(p_prev_correct + p_prev_incorrect * pt)) : Math.min(1,(p_prev_incorrect + p_prev_correct * pt))
+}
+
 export default function Question() {
 
   const [problem, setProblem] = useState()
   const [config, setConfig] = useState()
   const [answer, setAnswer] = useState()
+  const [isQuestionComplete,setIsQuestionComplete] = useState(false)
   const [questionStatus, setQuestionStatus] = useState('NotStarted')
 
-  const [cookies, setCookie] = useCookies(['mastery', 'config']);
+  const [cookies, setCookies] = useCookies(['mastery', 'config']);
 
 
   const randGenerateQuestion = () => {
@@ -54,9 +63,10 @@ export default function Question() {
 
     setProblem(problemDescription)
     setConfig(problemConfig)
-    setCookie('config', problemConfig, {path: '/'})
+    setCookies('config', problemConfig, {path: '/'})
     setAnswer(undefined)
     setQuestionStatus('NotStarted')
+    setIsQuestionComplete(false)
   }
 
   const calculateCorrectAns = () => {
@@ -83,8 +93,17 @@ export default function Question() {
     const possibleSolutions = calculateCorrectAns()
     const isCorrect = possibleSolutions.includes(parseInt(answer))
     setQuestionStatus(isCorrect ? 'Correct' : 'Incorrect')
-    setCookie('mastery', isCorrect ? 1 : -1, {path: '/'}) // WIP, will incorporate BKT
+    // having P(slip)=0.1, P(guess)=0.2 and P(transfer) = 0.3 looks good to me
+    // the learners cannot abuse the system by keep submitting incorrect answers
+    // for those who know how to solve the problem, they will complete after answering the question for three times
+    const newMastery = calculateNewMastery(cookies['mastery'],0.1,0.2,0.3,isCorrect)
+
+    setIsQuestionComplete(isCorrect)
+
+    setCookies('mastery', newMastery, {path: '/'}) // WIP, will incorporate BKT
   }
+
+
 
 
   return (
@@ -93,10 +112,15 @@ export default function Question() {
         <Button variant={'outlined'} href={'/'}>Home</Button>
         <Button variant={'outlined'} href={'/profile'}>Check your learner profile</Button>
       </nav>
-      <p>Your current progress: {cookies.mastery}</p>
+      <p>Your current progress:</p>
+      <CircularProgress variant="determinate" value={Math.min(1,cookies.mastery)*100}/>
+      <br/>
+
+
       <Button variant={'outlined'} onClick={() => {
-        if (window.confirm('Are you sure you want to reset your progress back to 0?')) {
-          setCookie('mastery', 0, {path: '/'})
+        if (window.confirm('Are you sure you want to reset your progress?')) {
+          setCookies('mastery', 0.01, {path: '/'})
+          setIsQuestionComplete(false)
         }
       }
       }>Reset your progress</Button>
@@ -109,7 +133,7 @@ export default function Question() {
         <div className={'answer'}>
           <TextField label="Your Answer" variant="outlined" onChange={(e) => setAnswer(e.target.value)}/>
           <br/>
-          <Button variant={'outlined'} onClick={grade}>Submit</Button>
+          <Button variant={'outlined'} disabled={isQuestionComplete} onClick={grade}>Submit</Button>
         </div>
 
         <div className={'results'}>
@@ -129,6 +153,11 @@ export default function Question() {
           {/*In both situations, show the button to check out the tutorial*/}
           {questionStatus !== 'NotStarted' && <div>
             <Button variant={'outlined'} href={'/tutor'}>Check out the tutorial</Button>
+          </div>}
+
+          {cookies.mastery>=0.95 && <div className={'CompleteLearning'}>
+            <h3>Congratulations! You've MASTERED this kind of problem!</h3>
+            <p>You may quit the tutoring now, or keep practicing if you wish.</p>
           </div>}
         </div>
 
