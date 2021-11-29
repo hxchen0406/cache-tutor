@@ -32,7 +32,7 @@ export const calculateNewMastery = (p_prev, ps, pg, pt, isCorrect) => {
   const p_prev_correct = p_prev * (1 - ps) / (p_prev * (1 - ps) + (1 - p_prev) * pg)
   const p_prev_incorrect = p_prev * ps / (p_prev * ps + (1 - p_prev) * (1 - pg))
 
-  return isCorrect ? Math.min(1,(p_prev_correct + p_prev_incorrect * pt)) : Math.min(1,(p_prev_incorrect + p_prev_correct * pt))
+  return isCorrect ? Math.min(1,(p_prev_correct + (1-p_prev_incorrect) * pt)) : Math.min(1,(p_prev_incorrect + (1-p_prev_correct)* pt))
 }
 
 export default function Question() {
@@ -96,7 +96,7 @@ export default function Question() {
     // having P(slip)=0.1, P(guess)=0.2 and P(transfer) = 0.3 looks good to me
     // the learners cannot abuse the system by keep submitting incorrect answers
     // for those who know how to solve the problem, they will complete after answering the question for three times
-    const newMastery = calculateNewMastery(cookies['mastery'],0.1,0.2,0.3,isCorrect)
+    const newMastery = calculateNewMastery(cookies['mastery'],0.3,0.1,0.2,isCorrect)
 
     setIsQuestionComplete(isCorrect)
 
@@ -119,8 +119,9 @@ export default function Question() {
 
       <Button variant={'outlined'} onClick={() => {
         if (window.confirm('Are you sure you want to reset your progress?')) {
-          setCookies('mastery', 0.01, {path: '/'})
+          setCookies('mastery', 0, {path: '/'})
           setIsQuestionComplete(false)
+          randGenerateQuestion()
         }
       }
       }>Reset your progress</Button>
