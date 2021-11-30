@@ -110,7 +110,7 @@ export default function Question() {
     <div className={'Question'} style={{whiteSpace: 'break-spaces'}}>
       <nav>
         <Button variant={'outlined'} href={'/'}>Home</Button>
-        <Button variant={'outlined'} href={'/profile'}>Check your learner profile</Button>
+        {/*<Button variant={'outlined'} href={'/profile'}>Check your learner profile</Button>*/}
       </nav>
       <p>Your current progress:</p>
       <CircularProgress variant="determinate" value={Math.min(1,cookies.mastery)*100}/>
@@ -138,28 +138,26 @@ export default function Question() {
         </div>
 
         <div className={'results'}>
-          {/*If the answer is correct, show this message*/}
-          {questionStatus === 'Correct' && <div>
-            <h3>That's correct! Well done!</h3>
-            <p>Let's try a few more times to make sure you really understand.</p>
-            <p>If you are interested, here's a tutorial you can follow:</p>
-          </div>}
-
-          {/*If the answer is incorrect, show this message*/}
-          {questionStatus === 'Incorrect' && <div>
-            <h3>Uh-oh, something is wrong here.</h3>
-            <h3>Let me lead you through this problem step by step</h3>
-          </div>}
-
-          {/*In both situations, show the button to check out the tutorial*/}
-          {questionStatus !== 'NotStarted' && <div>
-            <Button variant={'outlined'} href={'/tutor'}>Check out the tutorial</Button>
-          </div>}
-
-          {cookies.mastery>=0.95 && <div className={'CompleteLearning'}>
+          {cookies.mastery>=0.95 ? <div className={'CompleteLearning'}>
             <h3>Congratulations! You've MASTERED this kind of problem!</h3>
             <p>You may quit the tutoring now, or keep practicing if you wish.</p>
-          </div>}
+          </div>:   <div className={'OngoingLearning'}>{/*If the answer is correct, show this message*/}
+            {questionStatus === 'Correct' && <div>
+              <h3>That's correct! Well done!</h3>
+              <p>Let's try a few more times to make sure you really understand.</p>
+              <p>If you are interested, here's a tutorial you can follow:</p>
+            </div>}
+
+            {/*If the answer is incorrect, show this message*/}
+            {questionStatus === 'Incorrect' && <div>
+              <h3>Uh-oh, something is wrong here.</h3>
+              <h3>Let me lead you through this problem step by step</h3>
+            </div>}
+
+            {/*In both situations, show the button to check out the tutorial*/}
+            {questionStatus !== 'NotStarted' && <div>
+              <Button variant={'outlined'} href={'/tutor'}>Check out the tutorial</Button>
+            </div>}</div>}
         </div>
 
       </div>}

@@ -70,8 +70,8 @@ export default function Tutor() {
           <Button variant={'outlined'} href={'/question'}>Back to question</Button>
         </nav>
       </div>
-      <p>Your current mastery level:</p>
-      {cookies.mastery}
+      <p>Your current progress:</p>
+      {/*{cookies.mastery}*/}
       <CircularProgress variant="determinate" value={Math.min(1,cookies.mastery)*100}/>
       <br/>
       {cookies.mastery>=0.5 &&<div>
