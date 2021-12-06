@@ -2,7 +2,7 @@ import Button from "@material-ui/core/Button";
 import {useCookies} from "react-cookie";
 import {useState} from "react";
 
-import {calculateNewMastery, randGenerateConfig} from './Question'
+import {calculateNextBKT, randGenerateConfig} from './Question'
 import {CircularProgress, TextField} from "@material-ui/core";
 
 export default function Tutor() {
@@ -25,7 +25,7 @@ export default function Tutor() {
   const gradeStepOne = () => {
     const isCorrect = parseInt(stepOneAnswer) === config['cacheSize'] / config['sizePerElem']
     setIsStepCorrect({...isStepCorrect, 'one': isCorrect})
-    //TODO: update kc value
+    cookies.kc.numElemWholeCache = calculateNextBKT(cookies.kc.numElemWholeCache, 0.1, 0.2, 0.3, isCorrect)
   }
 
   const [currStepOneHint, setCurrStepOneHint] = useState(0)
@@ -37,7 +37,8 @@ export default function Tutor() {
   const gradeStepTwo = () => {
     const isCorrect = parseInt(stepTwoAnswer) === config['numElemPerWay']
     setIsStepCorrect({...isStepCorrect, 'two': isCorrect})
-    //TODO: update kc value
+    cookies.kc.numElemPerWay = calculateNextBKT(cookies.kc.numElemPerWay, 0.1, 0.2, 0.3, isCorrect)
+
 
   }
   const [currStepTwoHint, setCurrStepTwoHint] = useState(0)
@@ -50,7 +51,8 @@ export default function Tutor() {
   const gradeStepThree = () => {
     const isCorrect = parseInt(stepThreeAnswer) === config['blockSize'] / config['sizePerElem']
     setIsStepCorrect({...isStepCorrect, 'three': isCorrect})
-    //TODO: update kc value
+    cookies.kc.numElemPerBlock = calculateNextBKT(cookies.kc.numElemPerBlock, 0.1, 0.2, 0.3, isCorrect)
+
 
   }
   const [currStepThreeHint, setCurrStepThreeHint] = useState(0)
@@ -63,10 +65,7 @@ export default function Tutor() {
   const gradeStepFour = () => {
     const isCorrect = parseInt(stepFourAnswer) === config['numElemPerWay']
     setIsStepCorrect({...isStepCorrect, 'four': isCorrect})
-    const newMastery = calculateNewMastery(cookies.mastery, 0.1, 0.3, 0.1, isCorrect)
-    if (cookies.mastery < 0.5) {
-      setCookies('mastery', Math.min(0.5, newMastery))
-    }
+    cookies.kc.imagineAccess = calculateNextBKT(cookies.kc.imagineAccess, 0.1, 0.2, 0.2, isCorrect)
   }
   const [currStepFourHint, setCurrStepFourHint] = useState(0)
   const stepFourHint = [`Now way 0 is all filled up by ${config['dataType']}s, and we actually just calculated how many of them can be fit into one way`,
@@ -78,10 +77,7 @@ export default function Tutor() {
   const gradeStepFive = () => {
     const isCorrect = parseInt(stepFiveAnswer) === (config['numElemPerWay'] + 1)
     setIsStepCorrect({...isStepCorrect, 'five': isCorrect})
-    const newMastery = calculateNewMastery(cookies.mastery, 0.1, 0.3, 0.1, isCorrect)
-    if (cookies.mastery < 0.5) {
-      setCookies('mastery', Math.min(0.5, newMastery))
-    }
+    cookies.kc.imagineAccess = calculateNextBKT(cookies.kc.imagineAccess, 0.05, 0.3, 0.2, isCorrect)
   }
   const [currStepFiveHint, setCurrStepFiveHint] = useState(0)
   const stepFiveHint = [`Way 1, index 0, and offset ${config['sizePerElem']} suggest this should be the next element right after A[${config['numElemPerWay']}]`,
@@ -90,16 +86,16 @@ export default function Tutor() {
 
   const gradeStepSix = (isCorrect) => {
     setIsStepCorrect({...isStepCorrect, 'six': isCorrect})
-    const newMastery = calculateNewMastery(cookies.mastery, 0.12, 0.28, 0.1, isCorrect)
+    const newMastery = calculateNextBKT(cookies.mastery, 0.12, 0.28, 0.1, isCorrect) //TODO might adjust these params
+
     if (cookies.mastery < 0.5) {
-      setCookies('mastery', Math.min(0.5, newMastery))
+      cookies.mastery = Math.min(0.5, newMastery)
     }
   }
   const [currStepSixHint, setCurrStepSixHint] = useState(0)
-  const stepSixHint = [`Now you see A[0] and A[${config['numElemPerWay']}] map to the same index and offset, so does the pair of A[1] and A[${config['numElemPerWay']+1}]. What can you infer from this?`,
-  `The index difference of these matching pairs is ${config['numElemPerWay']}.`,
-  `Therefore, A[N] would map to the same index and offset as A[N+${config['numElemPerWay']}]`]
-
+  const stepSixHint = [`Now you see A[0] and A[${config['numElemPerWay']}] map to the same index and offset, so does the pair of A[1] and A[${config['numElemPerWay'] + 1}]. What can you infer from this?`,
+    `The index difference of these matching pairs is ${config['numElemPerWay']}.`,
+    `Therefore, A[N] would map to the same index and offset as A[N+${config['numElemPerWay']}]`]
 
 
   const [stepSevenAnswer, setStepSevenAnswer] = useState()
@@ -111,18 +107,16 @@ export default function Tutor() {
     //3 & 4. the index should be within bound (non-negative, cannot exceed the array size)
     let isCorrect = (diff % config.numElemPerWay === 0) && diff !== 0 && ansIdx >= 0 && ansIdx < config.arraySize
     setIsStepCorrect({...isStepCorrect, 'seven': isCorrect})
-    const newMastery = calculateNewMastery(cookies.mastery, 0.3, 0.1, 0.1, isCorrect)
+    const newMastery = calculateNextBKT(cookies.mastery, 0.3, 0.1, 0.1, isCorrect)
     if (cookies.mastery < 0.5) {
-      setCookies('mastery', Math.min(0.5, newMastery))
+      cookies.mastery = Math.min(0.5, newMastery)
     }
   }
 
   const [currStepSevenHint, setCurrStepSevenHint] = useState(0)
   const stepSevenHint = [`According to the previous step, A[n] and A[n+${config['numElemPerWay']}] are mapped to the same index and offset.`,
-  `If you replace n with ${config['givenIdx']}, what should n+${config['numElemPerWay']} be?`,
-  `One possible answer is A[${config['givenIdx']+config['numElemPerWay']}]`]
-
-
+    `If you replace n with ${config['givenIdx']}, what should n+${config['numElemPerWay']} be?`,
+    `One possible answer is A[${config['givenIdx'] + config['numElemPerWay']}]`]
 
 
   const generateQuestionText = (questionConfig) => {
@@ -136,13 +130,26 @@ export default function Tutor() {
     <div className={'Tutor'}>
       <div className={'Navigation'}>
         <nav>
-          <Button variant={'outlined'} href={'/question'}>Back to question</Button>
+          <Button variant={'outlined'} href={'/question'} onClick={() => {
+            setCookies('mastery', cookies.mastery, {path: '/'})
+            setCookies('kc', cookies.kc, {path: '/'})
+          }}>Back to question</Button>
         </nav>
       </div>
-      <p>Your current progress:</p>
-      {/*{cookies.mastery}*/}
-      <CircularProgress variant="determinate" value={Math.min(1, cookies.mastery) * 100}/>
-      <br/>
+      <div className={'Progress'}>
+        <p>Your current progress:</p>
+        <CircularProgress variant="determinate" value={Math.min(1, cookies.mastery) * 100}/>
+      </div>
+      <div className={'KnowledgeComponents'}>
+        {/*TODO remove this div later*/}
+        {cookies.kc.numElemWholeCache}
+        <br/>
+        {cookies.kc.numElemPerWay}
+        <br/>
+        {cookies.kc.numElemPerBlock}
+        <br/>
+        {cookies.kc.imagineAccess}
+      </div>
       {cookies.mastery >= 0.5 && <div>
         <p>You can only earn up to 50% of mastery score through the tutoring process.</p>
         <p> To push yourself further, try solving a question on your own.</p>
@@ -312,7 +319,8 @@ export default function Tutor() {
         <p>Do you see the pattern here? Given A[n], which of the following element would map to the same index and
           offset as A[N]?</p>
         <p>(Suppose there's no index-out-of-bound issue.)</p>
-        <Button variant={'outlined'} onClick={() => gradeStepSix(true)} disabled={isStepCorrect['six']}>A[N+{config.numElemPerWay}]</Button>
+        <Button variant={'outlined'} onClick={() => gradeStepSix(true)}
+                disabled={isStepCorrect['six']}>A[N+{config.numElemPerWay}]</Button>
         <Button variant={'outlined'} disabled={isStepCorrect['six']}
                 onClick={() => gradeStepSix(false)}>A[N+{config.numElemPerWay / 2}]</Button>
         <Button variant={'outlined'} disabled={isStepCorrect['six']}
@@ -345,20 +353,23 @@ export default function Tutor() {
         }}/>
         <Button variant={'outlined'} onClick={gradeStepSeven}>Submit</Button>
 
-        {'seven' in isStepCorrect && <div className={'SteoSevenResult'}>
+        {'seven' in isStepCorrect && <div className={'StepSevenResult'}>
           {isStepCorrect['seven'] ?
             <div className={'StepSevenCorrect'}>
               <h3>Congratulations! You've made it!</h3>
-              <p>Now let's try this question again with a different configuration to strengthen your understanding</p>
+              <p>Now let's try answering this question again with a different configuration to strengthen your
+                understanding</p>
+              <p>If you need to go through this tutorial again, feel free to come back.</p>
               <Button variant={'outlined'} href={'/question'} onClick={() => {
-                setCookies('mastery', 0.5) //TODO: fix: carry current mastery over
+                setCookies('mastery', cookies.mastery, {path: '/'})
+                setCookies('kc', cookies.kc, {path: '/'})
               }
               }>Ok, try another variant.</Button>
             </div> : <div className={'StepSevenIncorrect'}>
-                <p>{stepSevenHint[currStepSevenHint]}</p>
-                {currStepSevenHint + 1 < stepSevenHint.length &&
-                <Button onClick={() => getNextHint(stepSevenHint, currStepSevenHint, setCurrStepSevenHint)}
-                        variant={'outlined'}>Next Hint</Button>}
+              <p>{stepSevenHint[currStepSevenHint]}</p>
+              {currStepSevenHint + 1 < stepSevenHint.length &&
+              <Button onClick={() => getNextHint(stepSevenHint, currStepSevenHint, setCurrStepSevenHint)}
+                      variant={'outlined'}>Next Hint</Button>}
             </div>}
         </div>}
 

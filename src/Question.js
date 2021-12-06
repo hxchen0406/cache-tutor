@@ -28,7 +28,7 @@ export function randGenerateConfig() {
   }
 }
 
-export const calculateNewMastery = (p_prev, ps, pg, pt, isCorrect) => {
+export const calculateNextBKT = (p_prev, ps, pg, pt, isCorrect) => {
   const p_prev_correct = p_prev * (1 - ps) / (p_prev * (1 - ps) + (1 - p_prev) * pg)
   const p_prev_incorrect = p_prev * ps / (p_prev * ps + (1 - p_prev) * (1 - pg))
 
@@ -96,7 +96,7 @@ export default function Question() {
     // having P(slip)=0.1, P(guess)=0.2 and P(transfer) = 0.3 looks good to me
     // the learners cannot abuse the system by keep submitting incorrect answers
     // for those who know how to solve the problem, they will complete after answering the question for three times
-    const newMastery = calculateNewMastery(cookies['mastery'],0.3,0.1,0.2,isCorrect)
+    const newMastery = calculateNextBKT(cookies['mastery'],0.3,0.1,0.2,isCorrect)
 
     setIsQuestionComplete(isCorrect)
 
@@ -112,15 +112,21 @@ export default function Question() {
         <Button variant={'outlined'} href={'/'}>Home</Button>
         {/*<Button variant={'outlined'} href={'/profile'}>Check your learner profile</Button>*/}
       </nav>
+      <div className={"Progress"}>
       <p>Your current progress:</p>
       <CircularProgress variant="determinate" value={Math.min(1,cookies.mastery)*100}/>
-      <br/>
-
-
+      </div>
+      {/*TODO: hide this later*/}
+      <div>
+        <p>{cookies.kc.numElemWholeCache}</p>
+        <p>{cookies.kc.numElemPerWay}</p>
+        <p>{cookies.kc.numElemPerBlock}</p>
+        <p>{cookies.kc.imagineAccess}</p>
+      </div>
       <Button variant={'outlined'} onClick={() => {
         if (window.confirm('Are you sure you want to reset your progress?')) {
           setCookies('mastery', 0, {path: '/'})
-          setCookies('kc',{},{path:'/'})
+          setCookies('kc',{'numElemWholeCache':0.5, 'numElemPerWay':0.5, 'numElemPerBlock':0.5, 'imagineAccess':0.5},{path:'/'})
           setIsQuestionComplete(false)
           // randGenerateQuestion()
         }
