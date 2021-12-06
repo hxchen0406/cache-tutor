@@ -43,7 +43,7 @@ export default function Question() {
   const [isQuestionComplete,setIsQuestionComplete] = useState(false)
   const [questionStatus, setQuestionStatus] = useState('NotStarted')
 
-  const [cookies, setCookies] = useCookies(['mastery', 'config']);
+  const [cookies, setCookies] = useCookies(['mastery', 'config','kc']);
 
 
   const randGenerateQuestion = () => {
@@ -100,7 +100,7 @@ export default function Question() {
 
     setIsQuestionComplete(isCorrect)
 
-    setCookies('mastery', newMastery, {path: '/'}) // WIP, will incorporate BKT
+    setCookies('mastery', newMastery, {path: '/'})
   }
 
 
@@ -120,8 +120,9 @@ export default function Question() {
       <Button variant={'outlined'} onClick={() => {
         if (window.confirm('Are you sure you want to reset your progress?')) {
           setCookies('mastery', 0, {path: '/'})
+          setCookies('kc',{},{path:'/'})
           setIsQuestionComplete(false)
-          randGenerateQuestion()
+          // randGenerateQuestion()
         }
       }
       }>Reset your progress</Button>
