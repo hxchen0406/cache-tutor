@@ -86,7 +86,7 @@ export default function Tutor() {
 
   const gradeStepSix = (isCorrect) => {
     setIsStepCorrect({...isStepCorrect, 'six': isCorrect})
-    const newMastery = calculateNextBKT(cookies.mastery, 0.12, 0.28, 0.1, isCorrect) //TODO might adjust these params
+    const newMastery = calculateNextBKT(cookies.mastery, 0.12, 0.28, 0.1, isCorrect)
 
     if (cookies.mastery < 0.5) {
       cookies.mastery = Math.min(0.5, newMastery)
@@ -133,6 +133,7 @@ export default function Tutor() {
           <Button variant={'outlined'} href={'/question'} onClick={() => {
             setCookies('mastery', cookies.mastery, {path: '/'})
             setCookies('kc', cookies.kc, {path: '/'})
+            setCookies('isTutorialUsed', cookies.isTutorialUsed, {path: '/'})
           }}>Back to question</Button>
         </nav>
       </div>
@@ -140,16 +141,12 @@ export default function Tutor() {
         <p>Your current progress:</p>
         <CircularProgress variant="determinate" value={Math.min(1, cookies.mastery) * 100}/>
       </div>
-      <div className={'KnowledgeComponents'}>
-        {/*TODO remove this div later*/}
-        {cookies.kc.numElemWholeCache}
-        <br/>
-        {cookies.kc.numElemPerWay}
-        <br/>
-        {cookies.kc.numElemPerBlock}
-        <br/>
-        {cookies.kc.imagineAccess}
-      </div>
+      {/*<div>*/}
+      {/*  <p>{cookies.kc.numElemWholeCache}</p>*/}
+      {/*  <p>{cookies.kc.numElemPerWay}</p>*/}
+      {/*  <p>{cookies.kc.numElemPerBlock}</p>*/}
+      {/*  <p>{cookies.kc.imagineAccess}</p>*/}
+      {/*</div>*/}
       {cookies.mastery >= 0.5 && <div>
         <p>You can only earn up to 50% of mastery score through the tutoring process.</p>
         <p> To push yourself further, try solving a question on your own.</p>
@@ -161,6 +158,7 @@ export default function Tutor() {
       </div>
       {numStep === 0 ? <Button variant={'outlined'} onClick={() => {
           setNumStep(1)
+          cookies.isTutorialUsed = true
         }}>Start tutorial</Button> :
         <Button variant={'outlined'} onClick={() => {
           if (window.confirm('Are you sure you want to restart with another variant?')) {
@@ -191,8 +189,6 @@ export default function Tutor() {
         <p>To begin with, let's analyze the given cache configuration.</p>
         <p>Let's think about how many {config.dataType}s we can fit into the entire cache, each way, and each block,
           respectively.</p>
-        {/*<p>Since the total size of the cache is {config.cacheSize}B and the cache has {config.numWays} way(s),*/}
-        {/*  what is the size of each way?</p>*/}
 
         <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around'}}>
           <div className={'NumElemFullCache'} style={{display: 'flex', flexDirection: 'column'}}>
@@ -264,9 +260,8 @@ export default function Tutor() {
         <Button variant={'outlined'} onClick={gradeStepFour}>Submit</Button>
 
 
-        {/*after question one gets answered, display something*/}
         {'four' in isStepCorrect && <div className={'stepFourResult'}>
-          {/*if the answer is correct, go to step five (ask a different element)*/}
+          {/*if the answer is correct, go to step five (ask about a different element)*/}
           {isStepCorrect['four'] &&
           <div>
             <h3>That's correct!</h3>
@@ -275,7 +270,7 @@ export default function Tutor() {
             }}>Continue</Button>
           </div>}
 
-          {/*if the answer is incorrect, show some feedbacks*/}
+          {/*if the answer is incorrect, show some hints*/}
           {isStepCorrect['four'] === false && <div>
             <p>{stepFourHint[currStepFourHint]}</p>
             {currStepFourHint + 1 < stepFourHint.length &&
@@ -288,7 +283,7 @@ export default function Tutor() {
 
       }
 
-      {/*step 5: ask another element (or should I call it step 1.1?)*/}
+      {/*step 5: ask another element (or should I call it step 4.1?)*/}
       {numStep >= 3 &&
       <div className={'StepFive'}>
         <p>Then what about way 1, index 0, and offset {config.sizePerElem}? Hint: A[1] is mapped to the same index and
@@ -363,6 +358,8 @@ export default function Tutor() {
               <Button variant={'outlined'} href={'/question'} onClick={() => {
                 setCookies('mastery', cookies.mastery, {path: '/'})
                 setCookies('kc', cookies.kc, {path: '/'})
+                setCookies('isTutorialUsed', cookies.isTutorialUsed, {path: '/'})
+
               }
               }>Ok, try another variant.</Button>
             </div> : <div className={'StepSevenIncorrect'}>
@@ -372,10 +369,7 @@ export default function Tutor() {
                       variant={'outlined'}>Next Hint</Button>}
             </div>}
         </div>}
-
-
       </div>}
-
     </div>
   )
 
